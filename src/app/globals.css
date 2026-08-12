@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces (Light Theme) */
+  --color-lacquer-black: oklch(100% 0 0);        /* White background */
+  --color-lacquer-deep: oklch(98% 0 0);          /* Off-white background */
+  --color-raised-lacquer: oklch(100% 0 0);       /* White surface */
+  --color-graphite: oklch(94% 0 0);              /* Light gray */
+  
+  /* Brand anchors (Red Accent) */
+  --color-kinpaku-gold: oklch(60% 0.22 25);      /* Ampere Red */
+  --color-kinpaku-pale: oklch(92% 0.06 25);      /* Pale Red */
+  --color-kinpaku-deep: oklch(45% 0.15 25);      /* Deep Red */
+  --color-verdigris-patina: oklch(70% 0.12 188); /* Keep cyan as complimentary */
+  --color-patina-pale: oklch(82% 0.07 188);
+  
+  /* Text (Dark for Light Theme) */
+  --color-dark-ink: oklch(14% 0.018 95);         /* Very dark gray */
+  --color-champagne: oklch(20% 0 0);             /* Primary dark text */
+  --color-text-warm: oklch(35% 0 0);             /* Secondary dark text */
+  --color-text-muted: oklch(55% 0 0);            /* Muted dark text */
+  
+  /* Borders & Rules */
+  --color-gold-hairline: oklch(0% 0 0 / 0.25);   /* Light border */
+  --color-gold-hairline-strong: oklch(0% 0 0 / 0.45); /* Stronger light border */
+  --color-patina-rule: oklch(70% 0.105 190);
+  
+  /* State */
+  --color-success: oklch(65% 0.18 145);
+  --color-warning: oklch(68% 0.15 35);
+  
+  /* Base mappings */
+  --background: var(--color-lacquer-black);
+  --foreground: var(--color-text-warm);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  --color-lacquer-black: var(--color-lacquer-black);
+  --color-lacquer-deep: var(--color-lacquer-deep);
+  --color-raised-lacquer: var(--color-raised-lacquer);
+  --color-graphite: var(--color-graphite);
+  
+  --color-kinpaku-gold: var(--color-kinpaku-gold);
+  --color-kinpaku-pale: var(--color-kinpaku-pale);
+  --color-kinpaku-deep: var(--color-kinpaku-deep);
+  --color-verdigris-patina: var(--color-verdigris-patina);
+  --color-patina-pale: var(--color-patina-pale);
+  
+  --color-dark-ink: var(--color-dark-ink);
+  --color-champagne: var(--color-champagne);
+  --color-text-warm: var(--color-text-warm);
+  --color-text-muted: var(--color-text-muted);
+  
+  --color-gold-hairline: var(--color-gold-hairline);
+  --color-gold-hairline-strong: var(--color-gold-hairline-strong);
+  
+  --font-display: var(--font-alumni-sans), "Alumni Sans", "Inter", Arial, sans-serif;
+  --font-body: var(--font-inter), "Inter", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", "Roboto Mono", Consolas, monospace;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  /* Make scrolling smooth */
+  scroll-behavior: smooth;
+}
+
+/* Custom Utilities based on DESIGN.md */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
