@@ -73,7 +73,7 @@ export function AIAmbassador({ selectedCountry }: AIAmbassadorProps) {
         body: JSON.stringify({
           messages: [...messages, userMessage],
           countryName: currentCountry.name,
-          countryDescription: currentCountry.description,
+          countryDescription: (currentCountry as any).description || '',
         }),
       });
 
