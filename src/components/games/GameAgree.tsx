@@ -9,28 +9,31 @@ const QUESTIONS = [
     id: 1,
     text: "Các dân tộc có thể có ngôn ngữ, trang phục, ẩm thực và phong tục khác nhau. Những khác biệt đó là biểu hiện tự nhiên của sự đa dạng văn hóa.",
     answer: true,
+    explanation: "Đúng vậy! Sự khác biệt về ngôn ngữ, trang phục hay ẩm thực chính là những màu sắc riêng tạo nên bức tranh văn hóa đa dạng của nhân loại."
   },
   {
     id: 2,
     text: "Vì mỗi dân tộc có phong tục và cách sinh hoạt khác nhau nên chỉ có văn hóa của dân tộc mình mới đáng được coi trọng.",
     answer: false,
-    explanation: "Mỗi dân tộc có những giá trị văn hóa riêng và đều đáng được tôn trọng."
+    explanation: "Mỗi dân tộc có những giá trị văn hóa riêng và đều đáng được tôn trọng. Không có văn hóa nào là cao hay thấp hơn văn hóa nào."
   },
   {
     id: 3,
     text: "Áo dài của Việt Nam, kimono của Nhật Bản, sari của Ấn Độ và hanbok của Hàn Quốc khác nhau về kiểu dáng, nhưng đều là những biểu hiện của bản sắc văn hóa dân tộc.",
     answer: true,
+    explanation: "Chính xác! Dù khác nhau về hình thức, tất cả đều là trang phục truyền thống mang đậm dấu ấn và bản sắc của từng quốc gia."
   },
   {
     id: 4,
     text: "Các lễ hội, tín ngưỡng và phong tục khác nhau giữa các dân tộc là những yếu tố làm cho văn hóa thế giới trở nên đa dạng và phong phú.",
     answer: true,
+    explanation: "Hoàn toàn đồng ý! Nhờ sự khác biệt này mà thế giới trở nên thú vị và phong phú hơn để chúng ta tìm hiểu và khám phá."
   },
   {
     id: 5,
     text: "Khi thấy một dân tộc có cách ăn uống, giao tiếp hoặc trang phục khác với mình, chúng ta có thể cho rằng đó là cách sống lạc hậu và không phù hợp.",
     answer: false,
-    explanation: "Không nên đánh giá một nền văn hóa chỉ dựa trên tiêu chuẩn của văn hóa khác. Cần tìm hiểu hoàn cảnh và ý nghĩa của những nét văn hóa đó."
+    explanation: "Không nên đánh giá một nền văn hóa chỉ dựa trên tiêu chuẩn của mình. Cần tìm hiểu ý nghĩa để tôn trọng sự khác biệt của họ."
   }
 ];
 

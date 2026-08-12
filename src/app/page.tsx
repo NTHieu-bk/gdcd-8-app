@@ -16,6 +16,7 @@ import { GameQuiz } from "@/components/games/GameQuiz";
 import { Questions } from "@/components/home/Questions";
 import { CreativeCorner } from "@/components/home/CreativeCorner";
 import { Comments } from "@/components/home/Comments";
+import { UserGuide } from "@/components/home/UserGuide";
 
 export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
@@ -43,6 +44,7 @@ export default function Home() {
         
         <CreativeCorner />
         <Comments />
+        <UserGuide />
       </main>
       <Footer />
     </div>

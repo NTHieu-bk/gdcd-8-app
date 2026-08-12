@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, countryName, countryDescription } = await req.json();
+    const { messages, countryName, countryDescription, action, question, hint, answer } = await req.json();
 
     // Khởi tạo Gemini API
     const apiKey = process.env.GEMINI_API_KEY;
@@ -18,7 +18,29 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
-    // Tạo System Prompt (hướng dẫn cho AI)
+    // Mode 2: AI Chấm điểm câu hỏi SGK
+    if (action === 'grade_question') {
+      const prompt = `Bạn là một giáo viên GDCD lớp 8 nghiêm khắc nhưng tận tâm. 
+      Nhiệm vụ của bạn là chấm điểm (thang điểm 10) và nhận xét câu trả lời của học sinh.
+      
+      Câu hỏi: ${question}
+      Gợi ý đáp án chuẩn: ${hint}
+      Câu trả lời của học sinh: ${answer}
+      
+      Hãy trả lời bằng định dạng JSON (KHÔNG bọc trong markdown tick \`\`\`), chỉ trả về chuỗi JSON với cấu trúc:
+      {
+        "score": (điểm số từ 0 đến 10, có thể lẻ 0.5),
+        "comment": "(nhận xét ngắn gọn, động viên học sinh, chỉ ra chỗ đúng/sai)"
+      }`;
+      
+      const result = await model.generateContent(prompt);
+      let text = await result.response.text();
+      // Xóa markdown tick nếu AI vẫn trả về
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return NextResponse.json(JSON.parse(text));
+    }
+
+    // Mode 1: Đại sứ Văn hóa (Mặc định)
     let systemInstruction = `Bạn là Đại sứ Văn hóa AI thân thiện, thông minh và dí dỏm. Nhiệm vụ của bạn là giải đáp các câu hỏi của học sinh lớp 8 về văn hóa các dân tộc trên thế giới. Bạn sẽ xưng là "Đại sứ" và gọi người dùng là "bạn" hoặc "em". Hãy trả lời ngắn gọn, súc tích (khoảng 3-4 câu), ngôn ngữ phù hợp với tuổi teen, có thể dùng emoji. Nếu được hỏi về thông tin ngoài lề, hãy khéo léo dẫn dắt học sinh quay lại chủ đề văn hóa.`;
     
     if (countryName) {

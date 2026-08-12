@@ -200,7 +200,7 @@ export function CreativeCorner() {
                   </div>
                   <div>
                     <label className="block text-sm text-kinpaku-gold mb-1">Tải file lên * (Hình ảnh, Video, PDF, Word)</label>
-                    <div className="border-2 border-dashed border-gold-hairline rounded-md p-4 text-center bg-lacquer-black cursor-pointer hover:border-kinpaku-gold transition-colors">
+                    <div className="relative border-2 border-dashed border-gold-hairline rounded-md p-4 text-center bg-lacquer-black cursor-pointer hover:border-kinpaku-gold transition-colors">
                       <Input 
                         type="file" 
                         className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" 

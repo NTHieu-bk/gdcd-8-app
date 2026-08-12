@@ -20,6 +20,7 @@ export function Comments() {
   const [name, setName] = useState('');
   const [className, setClassName] = useState('');
   const [content, setContent] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch comments
   useEffect(() => {
@@ -57,6 +58,7 @@ export function Comments() {
     const now = new Date();
     
     if (isSupabaseConfigured()) {
+      setSubmitError(null);
       const { data, error } = await supabase
         .from('comments')
         .insert([{
@@ -66,6 +68,12 @@ export function Comments() {
         }])
         .select();
         
+      if (error) {
+        console.error("Lỗi gửi bình luận:", error);
+        setSubmitError("Lỗi kết nối CSDL: Vui lòng kiểm tra lại cấu hình Supabase (.env.local) hoặc thử lại sau.");
+        return;
+      }
+
       if (data && data.length > 0) {
         const item = data[0];
         const date = new Date(item.created_at);
@@ -143,6 +151,12 @@ export function Comments() {
                 />
               </div>
               
+              {submitError && (
+                <div className="text-vermilion-warning text-sm bg-vermilion-warning/10 border border-vermilion-warning/30 p-3 rounded">
+                  ⚠️ {submitError}
+                </div>
+              )}
+              
               <div className="flex justify-end pt-2">
                 <Button type="submit" variant="primary" className="px-8 font-bold tracking-widest">
                   💬 GỬI BÌNH LUẬN
@@ -197,17 +211,27 @@ export function Comments() {
         </div>
 
         {/* Link Goppy */}
-        <div id="feedback" className="mt-16 text-center">
-          <p className="text-text-muted mb-4">Em có góp ý để website tốt hơn?</p>
-          <a 
-            href="https://docs.google.com/forms/d/e/1FAIpQLSdF0eC_0JflPwOJIEc6hA4aeSzoyaZkJnQIKEREApUHLdAIww/viewform?usp=sharing&ouid=117345256325886889175" 
-            target="_blank" 
-            rel="noreferrer"
-          >
-            <Button variant="secondary" className="border-kinpaku-gold text-kinpaku-gold hover:bg-kinpaku-gold hover:text-lacquer-black">
-              💡 ĐÓNG GÓP Ý KIẾN TẠI ĐÂY
-            </Button>
-          </a>
+        <div id="feedback" className="mt-16 border-t border-gold-hairline pt-12">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-display text-kinpaku-gold mb-2 uppercase tracking-wider">
+              📝 ĐÓNG GÓP Ý KIẾN
+            </h3>
+            <p className="text-text-muted">Em có góp ý để website tốt hơn? Vui lòng điền vào phiếu khảo sát dưới đây.</p>
+          </div>
+          
+          <div className="bg-lacquer-black p-2 rounded-xl border border-gold-hairline shadow-lg overflow-hidden h-[600px] w-full">
+            <iframe 
+              src="https://docs.google.com/forms/d/e/1FAIpQLSdF0eC_0JflPwOJIEc6hA4aeSzoyaZkJnQIKEREApUHLdAIww/viewform?embedded=true" 
+              width="100%" 
+              height="100%" 
+              frameBorder="0" 
+              marginHeight={0} 
+              marginWidth={0}
+              className="bg-white rounded-lg"
+            >
+              Đang tải biểu mẫu...
+            </iframe>
+          </div>
         </div>
       </div>
     </section>
