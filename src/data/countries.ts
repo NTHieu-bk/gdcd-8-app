@@ -39,7 +39,7 @@ export const countries: CountryData[] = [
   },
   { 
     id: 'US', name: 'Hoa Kỳ', lat: 37.0902, lng: -95.7129, flag: '🇺🇸', 
-    description: 'Quốc gia đa văn hóa được mệnh danh là "nồi lẩu thập cẩm", hội tụ tinh hoa từ khắp nơi trên thế giới.',
+    description: 'Quốc gia đa văn hóa, được ví như một bức tranh giao thoa tuyệt đẹp hội tụ tinh hoa từ khắp nơi trên thế giới.',
     language: 'Tiếng Anh', cuisine: 'Hamburger, Hot dog, Bánh táo', costume: 'Đa dạng, tự do, trang phục cao bồi', festival: 'Lễ Tạ Ơn (Thanksgiving), Quốc khánh 4/7' 
   },
   { 
