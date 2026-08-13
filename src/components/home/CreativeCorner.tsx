@@ -34,6 +34,8 @@ export function CreativeCorner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -180,8 +182,6 @@ export function CreativeCorner() {
     }
     
     // Reset form
-    setName('');
-    setClassName('');
     setProductName('');
     setCountry('');
     setDescription('');
@@ -213,6 +213,10 @@ export function CreativeCorner() {
           .eq('id', id);
       }
     }
+  };
+
+  const handleDelete = (id: string) => {
+    setDeletingProductId(id);
   };
 
   const renderModalContent = (sub: Submission) => {
@@ -251,6 +255,50 @@ export function CreativeCorner() {
             <div className="mt-4 text-center">
               <h3 className="text-xl text-champagne font-bold">{selectedSubmission.productName}</h3>
               <p className="text-sm text-kinpaku-gold">Bởi: {selectedSubmission.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingProductId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-raised-lacquer border border-vermilion-warning/50 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl animate-fade-in-up">
+            <div className="text-center">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h3 className="text-xl font-bold text-champagne mb-3">Xác nhận xóa bài</h3>
+              <p className="text-text-muted mb-6">
+                Bạn có chắc chắn muốn xóa bài nộp "{submissions.find(s => s.id === deletingProductId)?.productName}" để nộp lại không?
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => setDeletingProductId(null)}
+                  disabled={isDeleting}
+                >
+                  Hủy bỏ
+                </Button>
+                <Button
+                  className="!bg-vermilion-warning !text-white hover:!bg-red-600"
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    setIsDeleting(true);
+                    try {
+                      if (isSupabaseConfigured()) {
+                        const { error } = await supabase.from('products').delete().eq('id', deletingProductId);
+                        if (error) { alert('Lỗi xóa: ' + error.message); setIsDeleting(false); return; }
+                      }
+                      setSubmissions(prev => prev.filter(s => s.id !== deletingProductId));
+                    } catch (err: any) {
+                      alert('Lỗi: ' + (err?.message || 'Không thể xóa'));
+                    }
+                    setIsDeleting(false);
+                    setDeletingProductId(null);
+                  }}
+                >
+                  {isDeleting ? 'Đang xóa...' : '🗑️ Xóa & Nộp lại'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -351,14 +399,15 @@ export function CreativeCorner() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 {submissions.map(sub => (
                   <SubmissionCard 
                     key={sub.id} 
                     sub={sub} 
                     name={name} 
                     className={className} 
-                    handleLike={handleLike} 
+                    handleLike={handleLike}
+                    handleDelete={handleDelete}
                     setSelectedSubmission={setSelectedSubmission} 
                   />
                 ))}
@@ -371,12 +420,12 @@ export function CreativeCorner() {
   );
 }
 
-function SubmissionCard({ sub, name, className, handleLike, setSelectedSubmission }: { sub: Submission, name: string, className: string, handleLike: (id: string) => void, setSelectedSubmission: (sub: Submission) => void }) {
+function SubmissionCard({ sub, name, className, handleLike, handleDelete, setSelectedSubmission }: { sub: Submission, name: string, className: string, handleLike: (id: string) => void, handleDelete: (id: string) => void, setSelectedSubmission: (sub: Submission) => void }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isOwner = sub.name === name && sub.class === className;
 
   return (
-    <Card className="border-gold-hairline bg-raised-lacquer overflow-hidden hover:border-kinpaku-gold transition-colors group flex flex-col h-full animate-fade-in-up">
+    <Card className="border-gold-hairline bg-raised-lacquer overflow-hidden hover:border-kinpaku-gold transition-colors group flex flex-col animate-fade-in-up">
       <div className="h-48 bg-lacquer-black relative border-b border-gold-hairline flex items-center justify-center overflow-hidden shrink-0">
         {sub.fileUrl && (sub.fileName.toLowerCase().endsWith('.png') || sub.fileName.toLowerCase().endsWith('.jpg') || sub.fileName.toLowerCase().endsWith('.jpeg') || sub.fileName.toLowerCase().endsWith('.gif') || sub.fileName.toLowerCase().endsWith('.webp')) ? (
           <div onClick={() => setSelectedSubmission(sub)} className="block w-full h-full cursor-pointer relative">
@@ -453,7 +502,7 @@ function SubmissionCard({ sub, name, className, handleLike, setSelectedSubmissio
           </div>
           
           {isOwner && sub.teacherScore && (
-            <div className="flex items-start gap-3 border-t border-gold-hairline pt-3 w-full">
+            <div className="flex items-start gap-3 border-t border-gold-hairline pt-3 w-full mt-3">
               <span className="text-2xl mt-0.5">👩‍🏫</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -465,6 +514,15 @@ function SubmissionCard({ sub, name, className, handleLike, setSelectedSubmissio
                 )}
               </div>
             </div>
+          )}
+
+          {isOwner && (
+            <button
+              onClick={() => handleDelete(sub.id)}
+              className="w-full mt-3 flex items-center justify-center gap-2 text-xs text-vermilion-warning/70 hover:text-vermilion-warning border border-dashed border-vermilion-warning/30 hover:border-vermilion-warning/70 rounded py-1.5 transition-all"
+            >
+              🗑️ Xóa bài &amp; Nộp lại
+            </button>
           )}
         </div>
       </div>

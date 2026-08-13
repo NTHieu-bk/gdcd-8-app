@@ -20,6 +20,10 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | number | null>(null);
   const [replyInput, setReplyInput] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [deletingBulk, setDeletingBulk] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const savedTab = localStorage.getItem('teacherActiveTab');
@@ -307,10 +311,109 @@ export function Dashboard({ onLogout }: DashboardProps) {
             ) : products.length === 0 ? (
               <div className="text-text-faint text-center p-10 bg-raised-lacquer border border-dashed border-gold-hairline/30 rounded-lg">Chưa có sản phẩm nào được nộp.</div>
             ) : (
-              <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-4">
+                {/* Delete Confirmation Modal */}
+                {(deletingProductId || deletingBulk) && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-raised-lacquer border border-vermilion-warning/50 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl animate-fade-in-up">
+                      <div className="text-center">
+                        <div className="text-5xl mb-4">⚠️</div>
+                        <h3 className="text-xl font-bold text-champagne mb-3">Xác nhận xóa</h3>
+                        <p className="text-text-muted mb-6">
+                          {deletingBulk 
+                            ? `Bạn có chắc chắn muốn xóa ${selectedProductIds.size} bài nộp đã chọn? Hành động này không thể hoàn tác.`
+                            : `Xóa bài nộp "${products.find(p => p.id === deletingProductId)?.product_name}" của ${products.find(p => p.id === deletingProductId)?.student_name}?`
+                          }
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                          <Button
+                            variant="secondary"
+                            onClick={() => { setDeletingProductId(null); setDeletingBulk(false); }}
+                            disabled={isDeleting}
+                          >
+                            Hủy bỏ
+                          </Button>
+                          <Button
+                            className="!bg-vermilion-warning !text-white hover:!bg-red-600"
+                            disabled={isDeleting}
+                            onClick={async () => {
+                              setIsDeleting(true);
+                              try {
+                                if (deletingBulk) {
+                                  const ids = Array.from(selectedProductIds);
+                                  const { error } = await supabase.from('products').delete().in('id', ids);
+                                  if (error) { alert('Lỗi xóa: ' + error.message); setIsDeleting(false); return; }
+                                  setProducts(prev => prev.filter(p => !selectedProductIds.has(p.id)));
+                                  setSelectedProductIds(new Set());
+                                } else if (deletingProductId) {
+                                  const { error } = await supabase.from('products').delete().eq('id', deletingProductId);
+                                  if (error) { alert('Lỗi xóa: ' + error.message); setIsDeleting(false); return; }
+                                  setProducts(prev => prev.filter(p => p.id !== deletingProductId));
+                                  setSelectedProductIds(prev => { const s = new Set(prev); s.delete(deletingProductId); return s; });
+                                }
+                              } catch (err: any) {
+                                alert('Lỗi: ' + (err?.message || 'Không thể xóa'));
+                              }
+                              setIsDeleting(false);
+                              setDeletingProductId(null);
+                              setDeletingBulk(false);
+                            }}
+                          >
+                            {isDeleting ? 'Đang xóa...' : '🗑️ Xóa vĩnh viễn'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bulk actions bar */}
+                <div className="flex items-center justify-between bg-raised-lacquer border border-gold-hairline rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm text-champagne">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-kinpaku-gold cursor-pointer"
+                        checked={selectedProductIds.size === products.length && products.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedProductIds(new Set(products.map(p => p.id)));
+                          } else {
+                            setSelectedProductIds(new Set());
+                          }
+                        }}
+                      />
+                      Chọn tất cả ({selectedProductIds.size}/{products.length})
+                    </label>
+                  </div>
+                  {selectedProductIds.size > 0 && (
+                    <Button
+                      variant="secondary"
+                      className="!text-vermilion-warning !border-vermilion-warning/50 hover:!bg-vermilion-warning/10"
+                      onClick={() => setDeletingBulk(true)}
+                    >
+                      🗑️ Xóa {selectedProductIds.size} bài đã chọn
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
                 {products.map(product => (
-                  <Card key={product.id} className="bg-raised-lacquer border-gold-hairline">
+                  <Card key={product.id} className={`bg-raised-lacquer ${selectedProductIds.has(product.id) ? 'border-kinpaku-gold' : 'border-gold-hairline'}`}>
                     <div className="p-6 flex flex-col md:flex-row gap-6 items-start">
+                      {/* Checkbox */}
+                      <div className="flex items-start pt-1">
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 accent-kinpaku-gold cursor-pointer"
+                          checked={selectedProductIds.has(product.id)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedProductIds);
+                            if (e.target.checked) { newSet.add(product.id); } else { newSet.delete(product.id); }
+                            setSelectedProductIds(newSet);
+                          }}
+                        />
+                      </div>
                       <div className="w-24 h-24 bg-lacquer-black rounded flex items-center justify-center text-3xl border border-gold-hairline-strong overflow-hidden flex-shrink-0 relative group mt-1">
                         {product.file_url && (product.file_name?.toLowerCase().endsWith('.png') || product.file_name?.toLowerCase().endsWith('.jpg') || product.file_name?.toLowerCase().endsWith('.jpeg') || product.file_name?.toLowerCase().endsWith('.gif') || product.file_name?.toLowerCase().endsWith('.webp')) ? (
                           <div onClick={() => setSelectedProduct(product)} className="block w-full h-full cursor-pointer relative">
@@ -373,12 +476,20 @@ export function Dashboard({ onLogout }: DashboardProps) {
                             )}
                             
                             {gradingProductId !== product.id && (
-                              <Button 
-                                onClick={() => { setGradingProductId(product.id); setTeacherScoreInput(product.teacher_score?.toString() || ''); setTeacherCommentInput(product.teacher_comment || ''); }} 
-                                className="ml-auto"
-                              >
-                                👩‍🏫 CHẤM SẢN PHẨM
-                              </Button>
+                              <div className="ml-auto flex gap-2">
+                                <Button 
+                                  onClick={() => { setGradingProductId(product.id); setTeacherScoreInput(product.teacher_score?.toString() || ''); setTeacherCommentInput(product.teacher_comment || ''); }} 
+                                >
+                                  👩‍🏫 CHẤM SẢN PHẨM
+                                </Button>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setDeletingProductId(product.id)}
+                                  className="!text-vermilion-warning !border-vermilion-warning/50 hover:!bg-vermilion-warning/10"
+                                >
+                                  🗑️ Xóa bài
+                                </Button>
+                              </div>
                             )}
                           </div>
 
@@ -414,6 +525,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     </div>
                   </Card>
                 ))}
+              </div>
               </div>
             )}
           </div>
