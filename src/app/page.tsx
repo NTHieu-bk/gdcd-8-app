@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
 import { Objectives } from "@/components/home/Objectives";
 import { GlobeExplorer } from "@/components/home/GlobeExplorer";
+import { AIAmbassador } from "@/components/home/AIAmbassador";
 import { MainContent } from "@/components/home/MainContent";
 import { CountryData } from "@/data/countries";
 
@@ -42,6 +43,7 @@ export default function Home() {
           selectedCountry={selectedCountry} 
           onSelectCountry={setSelectedCountry} 
         />
+        <AIAmbassador selectedCountry={selectedCountry} />
         <MainContent />
         <Questions />
         

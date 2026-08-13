@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 
@@ -44,6 +44,21 @@ export function GameAgree() {
   const [score, setScore] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
 
+  useEffect(() => {
+    const savedFinished = localStorage.getItem('gameAgreeFinished');
+    if (savedFinished === 'true') {
+      setIsFinished(true);
+      setScore(parseInt(localStorage.getItem('gameAgreeScore') || '0', 10));
+    } else {
+      const savedIndex = parseInt(localStorage.getItem('gameAgreeIndex') || '0', 10);
+      const savedScore = parseInt(localStorage.getItem('gameAgreeScore') || '0', 10);
+      if (savedIndex > 0) {
+        setCurrentQIndex(savedIndex);
+        setScore(savedScore);
+      }
+    }
+  }, []);
+
   const handleAnswer = (answer: boolean) => {
     if (showResult) return;
     
@@ -51,17 +66,24 @@ export function GameAgree() {
     setShowResult(true);
     
     if (answer === QUESTIONS[currentQIndex].answer) {
-      setScore(s => s + 1);
+      setScore(s => {
+        const newScore = s + 1;
+        localStorage.setItem('gameAgreeScore', newScore.toString());
+        return newScore;
+      });
     }
   };
 
   const handleNext = () => {
     if (currentQIndex < QUESTIONS.length - 1) {
-      setCurrentQIndex(currentQIndex + 1);
+      const newIndex = currentQIndex + 1;
+      setCurrentQIndex(newIndex);
+      localStorage.setItem('gameAgreeIndex', newIndex.toString());
       setShowResult(false);
       setSelectedAnswer(null);
     } else {
       setIsFinished(true);
+      localStorage.setItem('gameAgreeFinished', 'true');
     }
   };
 
@@ -71,6 +93,9 @@ export function GameAgree() {
     setSelectedAnswer(null);
     setScore(0);
     setIsFinished(false);
+    localStorage.removeItem('gameAgreeIndex');
+    localStorage.removeItem('gameAgreeScore');
+    localStorage.removeItem('gameAgreeFinished');
   };
 
   const currentQ = QUESTIONS[currentQIndex];
@@ -102,7 +127,7 @@ export function GameAgree() {
                   <Button 
                     onClick={() => handleAnswer(true)} 
                     disabled={showResult}
-                    className={`flex-1 py-6 text-lg ${showResult && selectedAnswer === true ? (currentQ.answer === true ? 'bg-emerald-600 border-emerald-500' : 'bg-vermilion-warning border-red-500') : showResult && currentQ.answer === true ? 'bg-emerald-600 border-emerald-500' : ''}`}
+                    className={`flex-1 py-6 text-lg ${showResult && selectedAnswer === true ? (currentQ.answer === true ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-red-500 border-red-600 text-white') : showResult && currentQ.answer === true ? 'bg-emerald-500 border-emerald-600 text-white' : ''}`}
                   >
                     👍 ĐỒNG TÌNH
                   </Button>
@@ -110,19 +135,19 @@ export function GameAgree() {
                     onClick={() => handleAnswer(false)} 
                     disabled={showResult}
                     variant="secondary"
-                    className={`flex-1 py-6 text-lg ${showResult && selectedAnswer === false ? (currentQ.answer === false ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-vermilion-warning border-red-500 text-white') : showResult && currentQ.answer === false ? 'bg-emerald-600 border-emerald-500 text-white' : ''}`}
+                    className={`flex-1 py-6 text-lg ${showResult && selectedAnswer === false ? (currentQ.answer === false ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-red-500 border-red-600 text-white') : showResult && currentQ.answer === false ? 'bg-emerald-500 border-emerald-600 text-white' : ''}`}
                   >
                     👎 KHÔNG ĐỒNG TÌNH
                   </Button>
                 </div>
 
                 {showResult && (
-                  <div className={`p-4 rounded-lg mb-6 text-left animate-fade-in-up ${selectedAnswer === currentQ.answer ? 'bg-emerald-900/30 border border-emerald-500/50' : 'bg-vermilion-warning/20 border border-vermilion-warning/50'}`}>
+                  <div className={`p-4 rounded-lg mb-6 text-left animate-fade-in-up ${selectedAnswer === currentQ.answer ? 'bg-emerald-900/30 border border-emerald-500/50' : 'bg-red-500/20 border border-red-500/50'}`}>
                     <div className="flex items-center gap-2 mb-2 font-bold">
                       {selectedAnswer === currentQ.answer ? (
                         <span className="text-emerald-400">✅ Chính xác!</span>
                       ) : (
-                        <span className="text-vermilion-warning">❌ Chưa chính xác.</span>
+                        <span className="text-red-500">❌ Chưa chính xác.</span>
                       )}
                     </div>
                     {currentQ.explanation && (

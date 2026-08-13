@@ -74,11 +74,27 @@ export function GameQuiz() {
         setTimeLeft(prev => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isPlaying) {
-      setIsFinished(true);
-      setIsPlaying(false);
+      finishGame(score, wrongCount);
     }
     return () => clearInterval(timer);
-  }, [isPlaying, timeLeft, isFinished]);
+  }, [isPlaying, timeLeft, isFinished, score, wrongCount]);
+
+  useEffect(() => {
+    const savedFinished = localStorage.getItem('gameQuizFinished');
+    if (savedFinished === 'true') {
+      setIsFinished(true);
+      setScore(parseInt(localStorage.getItem('gameQuizScore') || '0', 10));
+      setWrongCount(parseInt(localStorage.getItem('gameQuizWrong') || '0', 10));
+    }
+  }, []);
+
+  const finishGame = (finalScore: number, finalWrong: number) => {
+    setIsFinished(true);
+    setIsPlaying(false);
+    localStorage.setItem('gameQuizFinished', 'true');
+    localStorage.setItem('gameQuizScore', finalScore.toString());
+    localStorage.setItem('gameQuizWrong', finalWrong.toString());
+  };
 
   const startGame = () => {
     // Shuffle questions
@@ -99,11 +115,11 @@ export function GameQuiz() {
     setSelectedOption(optIndex);
     
     const isCorrect = optIndex === questions[currentQIndex].ans;
-    if (isCorrect) {
-      setScore(s => s + 10);
-    } else {
-      setWrongCount(c => c + 1);
-    }
+    const newScore = isCorrect ? score + 10 : score;
+    const newWrong = isCorrect ? wrongCount : wrongCount + 1;
+    
+    if (isCorrect) setScore(newScore);
+    else setWrongCount(newWrong);
 
     // Auto next after short delay
     setTimeout(() => {
@@ -111,10 +127,9 @@ export function GameQuiz() {
         setCurrentQIndex(c => c + 1);
         setSelectedOption(null);
       } else {
-        setIsFinished(true);
-        setIsPlaying(false);
+        finishGame(newScore, newWrong);
       }
-    }, 800);
+    }, 1000);
   };
 
   if (!isPlaying && !isFinished) {
@@ -180,28 +195,30 @@ export function GameQuiz() {
             <h3 className="text-xl md:text-2xl text-text-warm font-medium mb-8 leading-relaxed">
               {currentQ.q}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
               {currentQ.options.map((opt: string, idx: number) => {
-                let btnClass = "text-left h-auto py-4 px-6 border-gold-hairline-strong hover:border-kinpaku-gold";
+                let btnClass = "text-left h-full py-4 px-6 border border-gold-hairline-strong text-text-warm bg-lacquer-black hover:border-kinpaku-gold hover:bg-kinpaku-gold/10 transition-colors rounded-md";
+                let textClass = "font-bold mr-2 text-kinpaku-gold";
                 
                 if (selectedOption !== null) {
                   if (idx === currentQ.ans) {
-                    btnClass = "text-left h-auto py-4 px-6 bg-emerald-600 border-emerald-500 text-white";
+                    btnClass = "text-left h-full py-4 px-6 bg-emerald-500 border border-emerald-600 text-white rounded-md";
+                    textClass = "font-bold mr-2 text-emerald-100";
                   } else if (idx === selectedOption) {
-                    btnClass = "text-left h-auto py-4 px-6 bg-vermilion-warning border-red-500 text-white";
+                    btnClass = "text-left h-full py-4 px-6 bg-red-500 border border-red-600 text-white rounded-md";
+                    textClass = "font-bold mr-2 text-red-100";
                   }
                 }
 
                 return (
-                  <Button
+                  <button
                     key={idx}
-                    variant="secondary"
-                    className={btnClass}
+                    className={`focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-kinpaku-gold disabled:pointer-events-none disabled:opacity-80 ${btnClass}`}
                     onClick={() => handleAnswer(idx)}
                     disabled={selectedOption !== null}
                   >
-                    <span className="font-bold mr-2 text-kinpaku-gold">{['A', 'B', 'C', 'D'][idx]}.</span> {opt}
-                  </Button>
+                    <span className={textClass}>{['A', 'B', 'C', 'D'][idx]}.</span> {opt}
+                  </button>
                 );
               })}
             </div>

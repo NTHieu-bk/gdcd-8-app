@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ const navLinks = [
       { href: '#main-content', label: 'Nội dung chính', icon: '📖' },
       { href: '#challenges', label: 'Trạm thử thách', icon: '🎮' },
       { href: '#creative-corner', label: 'Góc sáng tạo & Nộp sản phẩm', icon: '🎨' },
-      { href: '#progress', label: 'Tiến trình', icon: '📊' },
+      { href: '#progress-modal', label: 'Tiến trình', icon: '📊' },
     ],
   },
   {
@@ -29,10 +29,26 @@ const navLinks = [
   },
 ];
 
+import { ProgressModal } from '../home/ProgressModal';
+
 export function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [studentInfo, setStudentInfo] = useState<{name: string, class: string} | null>(null);
+
+  useEffect(() => {
+    const studentDataStr = localStorage.getItem('studentData');
+    if (studentDataStr) {
+      try {
+        const student = JSON.parse(studentDataStr);
+        const name = student.full_name || student.username;
+        const className = student.class_name || '';
+        setStudentInfo({ name, class: className });
+      } catch (e) {}
+    }
+  }, []);
 
   const toggleDropdown = (label: string) => {
     setActiveDropdown(activeDropdown === label ? null : label);
@@ -95,7 +111,13 @@ export function Navbar() {
                           href={child.href}
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-warm hover:bg-lacquer-deep hover:text-kinpaku-gold transition-colors"
                           role="menuitem"
-                          onClick={() => setActiveDropdown(null)}
+                          onClick={(e) => {
+                            if (child.href === '#progress-modal') {
+                              e.preventDefault();
+                              setIsProgressModalOpen(true);
+                            }
+                            setActiveDropdown(null);
+                          }}
                         >
                           <span className="text-lg w-6 text-center">{child.icon}</span>
                           <span>{child.label}</span>
@@ -107,6 +129,18 @@ export function Navbar() {
               </div>
             ))}
             
+            {studentInfo && (
+              <div className="flex items-center ml-2 border-l border-gold-hairline pl-4 py-1">
+                <div className="text-right mr-3">
+                  <p className="text-xs text-text-muted leading-tight">Học sinh</p>
+                  <p className="text-sm font-bold text-champagne leading-tight truncate max-w-[150px]">{studentInfo.name} <span className="text-kinpaku-gold text-xs">({studentInfo.class})</span></p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-kinpaku-gold/20 flex items-center justify-center text-kinpaku-gold font-bold border border-kinpaku-gold/50 flex-shrink-0">
+                  {studentInfo.name.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 text-vermilion-warning hover:text-vermilion-deep transition-colors text-sm font-medium py-2 ml-4 border border-vermilion-warning/30 px-3 rounded-full hover:bg-vermilion-warning/10"
@@ -146,7 +180,13 @@ export function Navbar() {
                           key={child.label}
                           href={child.href}
                           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-muted hover:text-kinpaku-gold"
-                          onClick={() => setIsOpen(false)}
+                          onClick={(e) => {
+                            if (child.href === '#progress-modal') {
+                              e.preventDefault();
+                              setIsProgressModalOpen(true);
+                            }
+                            setIsOpen(false);
+                          }}
                         >
                           <span>{child.icon}</span>
                           <span>{child.label}</span>
@@ -167,7 +207,19 @@ export function Navbar() {
               </div>
             ))}
             
-            <div className="pt-4 pb-2 border-t border-gold-hairline mt-2">
+            {studentInfo && (
+              <div className="px-3 py-3 border-t border-gold-hairline mt-2 flex items-center gap-3 bg-lacquer-black/30">
+                <div className="w-10 h-10 rounded-full bg-kinpaku-gold/20 flex items-center justify-center text-kinpaku-gold font-bold border border-kinpaku-gold/50 text-lg flex-shrink-0">
+                  {studentInfo.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-xs text-text-muted leading-tight">Đang đăng nhập</p>
+                  <p className="text-base font-bold text-champagne leading-tight truncate max-w-[200px]">{studentInfo.name} <span className="text-kinpaku-gold text-sm">({studentInfo.class})</span></p>
+                </div>
+              </div>
+            )}
+            
+            <div className="pt-2 pb-2 border-t border-gold-hairline mt-0">
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-3 py-2 text-base font-medium text-vermilion-warning hover:text-vermilion-deep w-full text-left"
@@ -179,6 +231,8 @@ export function Navbar() {
           </div>
         </div>
       )}
+
+      <ProgressModal isOpen={isProgressModalOpen} onClose={() => setIsProgressModalOpen(false)} />
     </nav>
   );
 }

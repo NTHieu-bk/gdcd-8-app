@@ -13,6 +13,9 @@ interface Comment {
   content: string;
   date: string;
   time: string;
+  reply?: string;
+  replyDate?: string;
+  replyTime?: string;
 }
 
 export function Comments() {
@@ -42,18 +45,42 @@ export function Comments() {
       const { data, error } = await supabase
         .from('comments')
         .select('*')
+        .not('content', 'ilike', '[PROGRESS_SYNC]%')
         .order('created_at', { ascending: false });
         
       if (data) {
-        const formatted = data.map(item => {
+        const realComments = data.filter(c => !c.content.startsWith('[REPLY:'));
+        const replies = data.filter(c => c.content.startsWith('[REPLY:'));
+        
+        const replyMap = new Map();
+        replies.forEach(r => {
+          const match = r.content.match(/^\[REPLY:(.+?)\](.*)$/);
+          if (match) {
+            const parentId = match[1];
+            const date = new Date(r.created_at);
+            if (!replyMap.has(parentId)) { // Use oldest reply as the single reply
+              replyMap.set(parentId, {
+                content: match[2].trim(),
+                date: date.toLocaleDateString('vi-VN'),
+                time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              });
+            }
+          }
+        });
+
+        const formatted = realComments.map(item => {
           const date = new Date(item.created_at);
+          const reply = replyMap.get(item.id.toString());
           return {
-            id: item.id,
+            id: item.id.toString(),
             name: item.student_name,
             className: item.class_name,
             content: item.content,
             date: date.toLocaleDateString('vi-VN'),
-            time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+            time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            reply: reply?.content,
+            replyDate: reply?.date,
+            replyTime: reply?.time
           };
         });
         setComments(formatted);
@@ -112,8 +139,6 @@ export function Comments() {
     }
     
     // Reset form
-    setName('');
-    setClassName('');
     setContent('');
   };
 
@@ -175,8 +200,8 @@ export function Comments() {
             <div className="space-y-4">
               {comments.map(comment => (
                 <Card key={comment.id} className="border-gold-hairline bg-lacquer-deep animate-fade-in-up">
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-3">
+                  <div className="p-8">
+                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-kinpaku-gold/20 flex items-center justify-center text-kinpaku-gold font-bold border border-kinpaku-gold/30">
                           {comment.name.charAt(0).toUpperCase()}
@@ -184,7 +209,7 @@ export function Comments() {
                         <div>
                           <div className="flex items-baseline gap-2">
                             <span className="font-bold text-champagne">{comment.name}</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-lacquer-black border border-gold-hairline-strong text-kinpaku-gold">
+                            <span className="text-xs px-3 py-1 rounded bg-lacquer-black border border-gold-hairline-strong text-kinpaku-gold">
                               {comment.className}
                             </span>
                           </div>
@@ -198,6 +223,20 @@ export function Comments() {
                     <p className="text-text-warm leading-relaxed pl-13">
                       {comment.content}
                     </p>
+                    {comment.reply && (
+                      <div className="mt-5 ml-13">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">👩‍🏫</span>
+                          <span className="font-bold text-kinpaku-gold text-sm uppercase tracking-wider">Giáo viên phản hồi:</span>
+                          <div className="text-[11px] text-text-faint ml-2 border-l border-gold-hairline/50 pl-2">
+                            <span>📅 {comment.replyDate}</span> <span className="ml-1">⏰ {comment.replyTime}</span>
+                          </div>
+                        </div>
+                        <div className="w-full p-4 min-h-[100px] bg-lacquer-black border border-gold-hairline rounded-lg text-champagne/90 text-base leading-relaxed whitespace-pre-wrap text-left shadow-inner">
+                          {comment.reply}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}

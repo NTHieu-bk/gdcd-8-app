@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 
@@ -15,6 +15,17 @@ function QuestionCard({ id, questionText, hintText, hintRaw }: QuestionCardProps
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; comment: string } | null>(null);
+
+  useEffect(() => {
+    const savedResult = localStorage.getItem(`question_${id}_result`);
+    if (savedResult) {
+      try { setResult(JSON.parse(savedResult)); } catch (e) {}
+    }
+    const savedAnswer = localStorage.getItem(`question_${id}_answer`);
+    if (savedAnswer) {
+      setAnswer(savedAnswer);
+    }
+  }, [id]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) return;
@@ -35,21 +46,27 @@ function QuestionCard({ id, questionText, hintText, hintRaw }: QuestionCardProps
       const data = await response.json();
       if (response.ok) {
         setResult(data);
+        localStorage.setItem(`question_${id}_result`, JSON.stringify(data));
+        localStorage.setItem(`question_${id}_answer`, answer);
       } else {
         console.warn("Lỗi API AI:", data.error);
-        // Fallback tự động chấm điểm khi API lỗi (503 Overloaded)
-        setResult({
+        const fallback = {
           score: 8,
           comment: "Hệ thống AI hiện đang quá tải do có nhiều học sinh cùng nộp bài. Dựa trên độ dài câu trả lời, cô chấm tạm cho em 8 điểm nhé! Em hãy đọc thêm phần gợi ý bên dưới để hoàn thiện kiến thức."
-        });
+        };
+        setResult(fallback);
+        localStorage.setItem(`question_${id}_result`, JSON.stringify(fallback));
+        localStorage.setItem(`question_${id}_answer`, answer);
       }
     } catch (error) {
       console.error("Lỗi kết nối:", error);
-      // Fallback khi mất kết nối
-      setResult({
+      const errFallback = {
         score: 7.5,
         comment: "Không thể kết nối đến hệ thống AI lúc này. Cô ghi nhận em đã có cố gắng làm bài, hãy đối chiếu với gợi ý đáp án bên dưới nhé!"
-      });
+      };
+      setResult(errFallback);
+      localStorage.setItem(`question_${id}_result`, JSON.stringify(errFallback));
+      localStorage.setItem(`question_${id}_answer`, answer);
     } finally {
       setIsSubmitting(false);
     }
@@ -57,16 +74,16 @@ function QuestionCard({ id, questionText, hintText, hintRaw }: QuestionCardProps
 
   return (
     <Card className="border-gold-hairline bg-raised-lacquer">
-      <div className="p-8 md:p-12">
-        <h3 className="text-xl font-bold text-champagne mb-6 flex gap-2">
-          <span className="text-kinpaku-gold">{id}.</span> 
-          {questionText}
+      <div className="p-8 md:p-12 text-center">
+        <h3 className="text-xl font-bold text-champagne mb-6 flex justify-center gap-2 max-w-3xl mx-auto">
+          <span className="text-kinpaku-gold shrink-0">{id}.</span> 
+          <span>{questionText}</span>
         </h3>
         
         {!result ? (
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-3xl mx-auto flex flex-col items-center">
             <textarea
-              className="w-full p-4 bg-lacquer-black border border-gold-hairline rounded-lg text-text-warm focus:outline-none focus:border-kinpaku-gold"
+              className="w-full p-4 bg-lacquer-black border border-gold-hairline rounded-lg text-text-warm focus:outline-none focus:border-kinpaku-gold text-left"
               rows={4}
               placeholder="Nhập câu trả lời của em vào đây..."
               value={answer}
@@ -75,35 +92,38 @@ function QuestionCard({ id, questionText, hintText, hintRaw }: QuestionCardProps
             <Button 
               onClick={handleSubmit} 
               disabled={isSubmitting || !answer.trim()}
-              className="w-full md:w-auto"
+              className="w-full sm:w-auto px-10 tracking-widest font-bold mt-2"
+              size="lg"
             >
               {isSubmitting ? "🤖 AI ĐANG CHẤM ĐIỂM..." : "📤 NỘP BÀI"}
             </Button>
           </div>
         ) : (
-          <div className="animate-fade-in-up space-y-6">
+          <div className="animate-fade-in-up space-y-6 max-w-3xl mx-auto text-left">
             <div className="p-6 bg-lacquer-black border border-kinpaku-gold/30 rounded-lg">
-              <div className="flex items-center gap-3 mb-4 border-b border-gold-hairline-strong pb-3">
-                <span className="text-3xl">🤖</span>
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 border-b border-gold-hairline-strong pb-3">
+                <span className="text-4xl text-center sm:text-left">🤖</span>
+                <div className="text-center sm:text-left">
                   <h4 className="text-kinpaku-gold font-bold uppercase tracking-wider text-sm">AI Nhận xét</h4>
                   <div className="text-2xl text-champagne font-bold">{result.score} <span className="text-sm text-text-muted font-normal">/ 10 điểm</span></div>
                 </div>
               </div>
-              <p className="text-text-warm italic">"{result.comment}"</p>
+              <p className="text-text-warm italic text-center sm:text-left">"{result.comment}"</p>
             </div>
             
-            <div className="mt-6 p-8 rounded-lg border border-gold-hairline-strong bg-lacquer-black opacity-80">
-              <h4 className="text-kinpaku-gold font-bold mb-4">Gợi ý trả lời tham khảo:</h4>
+            <div className="mt-6 p-8 rounded-lg border border-gold-hairline-strong bg-lacquer-black opacity-90">
+              <h4 className="text-kinpaku-gold font-bold mb-4 text-center sm:text-left">Gợi ý trả lời tham khảo:</h4>
               <div className="space-y-4 text-text-muted text-sm leading-relaxed mb-6">
                 {hintText}
               </div>
               
-              <div className="flex justify-end border-t border-gold-hairline-strong pt-6">
+              <div className="flex justify-center sm:justify-end border-t border-gold-hairline-strong pt-6">
                 <Button 
                   onClick={() => {
                     setResult(null);
                     setAnswer('');
+                    localStorage.removeItem(`question_${id}_result`);
+                    localStorage.removeItem(`question_${id}_answer`);
                   }}
                   variant="secondary"
                   className="w-full sm:w-auto border-kinpaku-gold text-kinpaku-gold hover:bg-kinpaku-gold hover:text-lacquer-black"

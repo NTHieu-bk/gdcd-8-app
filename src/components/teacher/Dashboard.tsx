@@ -18,6 +18,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [teacherScoreInput, setTeacherScoreInput] = useState('');
   const [teacherCommentInput, setTeacherCommentInput] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [replyingToId, setReplyingToId] = useState<string | number | null>(null);
+  const [replyInput, setReplyInput] = useState('');
 
   useEffect(() => {
     const savedTab = localStorage.getItem('teacherActiveTab');
@@ -124,6 +126,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
     // Process comments
     comments.forEach(c => {
+      const isSyncComment = c.content.startsWith('[PROGRESS_SYNC]');
       const key = `${c.student_name}-${c.class_name}`;
       if (!studentMap.has(key)) {
         studentMap.set(key, { 
@@ -133,20 +136,36 @@ export function Dashboard({ onLogout }: DashboardProps) {
           productCount: 0, 
           commentCount: 0,
           ai_score_avg: 0,
-          total_score: 0
+          total_score: 0,
+          game_score: 0,
+          sgk_score: 0,
+          has_sync: false
         });
       }
-      studentMap.get(key).commentCount += 1;
+      
+      const student = studentMap.get(key);
+      if (isSyncComment) {
+        if (!student.has_sync) { // use latest since sorted by desc
+          try {
+            const data = JSON.parse(c.content.replace('[PROGRESS_SYNC]', ''));
+            student.game_score = data.game || 0;
+            student.sgk_score = data.sgk || 0;
+            student.has_sync = true;
+          } catch(e) {}
+        }
+      } else {
+        student.commentCount += 1;
+      }
     });
 
-    // Calculate final fake progress based on actual activity
+    // Calculate final progress based on actual activity and synced data
     return Array.from(studentMap.values()).map(s => {
-      const exchangeProgress = Math.min(s.commentCount * 25, 100);
+      const exchangeProgress = s.commentCount > 0 ? 100 : 0;
       const productProgress = s.productCount > 0 ? 100 : 0;
       
-      // Since we don't have game data, we'll estimate based on their product score
-      const gameProgress = s.productCount > 0 ? s.ai_score_avg : (s.commentCount > 0 ? 50 : 0);
-      const sgkProgress = s.productCount > 0 ? s.ai_score_avg : (s.commentCount > 0 ? 50 : 0);
+      // Use synced data if available, otherwise fallback to estimation
+      const gameProgress = s.has_sync ? s.game_score : (s.productCount > 0 ? s.ai_score_avg : (s.commentCount > 0 ? 50 : 0));
+      const sgkProgress = s.has_sync ? s.sgk_score : (s.productCount > 0 ? s.ai_score_avg : (s.commentCount > 0 ? 50 : 0));
       
       const totalProgress = Math.round((gameProgress + sgkProgress + productProgress + exchangeProgress) / 4);
       
@@ -161,6 +180,60 @@ export function Dashboard({ onLogout }: DashboardProps) {
     }).sort((a, b) => b.progress - a.progress);
   }, [products, comments]);
 
+  const displayComments = comments.filter(c => !c.content.startsWith('[PROGRESS_SYNC]'));
+  const realComments = displayComments.filter(c => !c.content.startsWith('[REPLY:'));
+  const replies = displayComments.filter(c => c.content.startsWith('[REPLY:'));
+  
+  const replyMap = new Map();
+  replies.forEach(r => {
+    const match = r.content.match(/^\[REPLY:(.+?)\](.*)$/);
+    if (match) {
+      const parentId = match[1];
+      if (!replyMap.has(parentId)) {
+        replyMap.set(parentId, {
+          id: r.id,
+          content: match[2].trim(),
+          created_at: r.created_at
+        });
+      }
+    }
+  });
+
+  const finalCommentsList = realComments.map(c => ({
+    ...c,
+    teacherReply: replyMap.get(c.id.toString())
+  }));
+
+  const handleReplySubmit = async (commentId: string | number) => {
+    if (!replyInput.trim() || !isSupabaseConfigured()) return;
+    
+    const content = `[REPLY:${commentId}] ${replyInput}`;
+    
+    const { data } = await supabase.from('comments').insert({
+      student_name: 'Giáo viên',
+      class_name: 'Quản trị',
+      content,
+      pinned: false
+    }).select();
+    
+    if (data && data.length > 0) {
+      setComments(prev => [data[0], ...prev]);
+    } else {
+      // fallback optimistic update
+      setComments(prev => [{
+        id: Date.now(),
+        student_name: 'Giáo viên',
+        class_name: 'Quản trị',
+        content,
+        created_at: new Date().toISOString(),
+        pinned: false
+      }, ...prev]);
+    }
+    
+    setReplyingToId(null);
+    setReplyInput('');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -171,7 +244,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               <Card className="bg-raised-lacquer border-gold-hairline"><CardContent className="p-6 pt-6 flex flex-col items-center justify-center text-center"><div className="text-3xl mb-2">👨‍🎓</div><div className="text-2xl font-bold text-champagne">120</div><div className="text-text-muted">Tổng học sinh</div></CardContent></Card>
               <Card className="bg-raised-lacquer border-gold-hairline"><CardContent className="p-6 pt-6 flex flex-col items-center justify-center text-center"><div className="text-3xl mb-2">🎨</div><div className="text-2xl font-bold text-champagne">{products.length}</div><div className="text-text-muted">Sản phẩm đã nộp</div></CardContent></Card>
               <Card className="bg-raised-lacquer border-gold-hairline"><CardContent className="p-6 pt-6 flex flex-col items-center justify-center text-center"><div className="text-3xl mb-2">📝</div><div className="text-2xl font-bold text-vermilion-warning">{products.filter(p => p.status === 'pending').length}</div><div className="text-text-muted">Cần chấm điểm</div></CardContent></Card>
-              <Card className="bg-raised-lacquer border-gold-hairline"><CardContent className="p-6 pt-6 flex flex-col items-center justify-center text-center"><div className="text-3xl mb-2">💬</div><div className="text-2xl font-bold text-emerald-400">{comments.length}</div><div className="text-text-muted">Bình luận</div></CardContent></Card>
+              <Card className="bg-raised-lacquer border-gold-hairline"><CardContent className="p-6 pt-6 flex flex-col items-center justify-center text-center"><div className="text-3xl mb-2">💬</div><div className="text-2xl font-bold text-emerald-400">{finalCommentsList.length}</div><div className="text-text-muted">Bình luận</div></CardContent></Card>
             </div>
           </div>
         );
@@ -352,25 +425,68 @@ export function Dashboard({ onLogout }: DashboardProps) {
             <h2 className="text-2xl font-display text-kinpaku-gold mb-6">💬 QUẢN LÝ BÌNH LUẬN</h2>
             {isLoading ? (
               <div className="text-kinpaku-gold animate-pulse text-center p-10 min-h-[800px] flex items-center justify-center text-xl">Đang tải dữ liệu...</div>
-            ) : comments.length === 0 ? (
+            ) : finalCommentsList.length === 0 ? (
               <div className="text-text-faint text-center p-10 bg-raised-lacquer border border-dashed border-gold-hairline/30 rounded-lg">Chưa có bình luận nào.</div>
             ) : (
               <div className="space-y-4">
-                {comments.map(comment => {
+                {finalCommentsList.map(comment => {
                   const date = new Date(comment.created_at);
                   return (
                     <Card key={comment.id} className={`bg-raised-lacquer border ${comment.pinned ? 'border-kinpaku-gold shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'border-gold-hairline'}`}>
-                      <CardContent className="p-5 flex flex-col md:flex-row gap-4">
+                      <CardContent className="!p-8 flex flex-col md:flex-row gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <div className="flex items-center gap-2 mb-4 flex-wrap">
                             <span className="font-bold text-champagne">{comment.student_name}</span>
-                            <span className="text-xs px-2 py-0.5 bg-lacquer-black rounded text-text-muted border border-gold-hairline-strong">{comment.class_name}</span>
+                            <span className="text-xs px-3 py-1 bg-lacquer-black rounded text-text-muted border border-gold-hairline-strong font-medium">{comment.class_name}</span>
                             <span className="text-xs text-text-faint ml-2">{date.toLocaleDateString('vi-VN')} {date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                             {comment.pinned && <span className="text-xs bg-kinpaku-gold text-lacquer-black px-2 py-0.5 rounded ml-2 font-bold flex items-center gap-1">📌 Đã ghim</span>}
                           </div>
-                          <p className="text-text-warm">{comment.content}</p>
+                          <p className="text-text-warm leading-relaxed pb-2 min-h-[28px]">{comment.content}</p>
+                          
+                          {/* Display Teacher Reply */}
+                          {comment.teacherReply && (
+                            <div className="mt-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-lg">👩‍🏫</span>
+                                <span className="font-bold text-kinpaku-gold text-sm uppercase tracking-wider">Giáo viên trả lời:</span>
+                              </div>
+                              <div className="w-full p-4 min-h-[100px] bg-lacquer-black border border-gold-hairline rounded-lg text-champagne/90 text-base leading-relaxed whitespace-pre-wrap text-left shadow-inner">
+                                {comment.teacherReply.content}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reply Input Form */}
+                          {replyingToId === comment.id && !comment.teacherReply && (
+                            <div className="mt-4 animate-fade-in-up">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-lg">👩‍🏫</span>
+                                <span className="font-bold text-kinpaku-gold text-sm uppercase tracking-wider">Giáo viên trả lời:</span>
+                              </div>
+                              <textarea 
+                                value={replyInput}
+                                onChange={e => setReplyInput(e.target.value)}
+                                placeholder="Nhập câu trả lời của giáo viên..."
+                                className="w-full p-4 bg-lacquer-black border border-gold-hairline rounded-lg text-champagne text-base focus:outline-none focus:border-kinpaku-gold text-left resize-none leading-relaxed mb-3 shadow-inner"
+                                rows={4}
+                                autoFocus
+                              />
+                              <div className="flex gap-3 justify-end">
+                                <Button size="sm" onClick={() => handleReplySubmit(comment.id)} className="bg-kinpaku-gold text-lacquer-black hover:bg-champagne font-bold px-6">GỬI</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setReplyingToId(null)} className="px-4">HỦY</Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex md:flex-col gap-2 mt-4 md:mt-0">
+                        <div className="flex flex-row md:flex-col gap-2 mt-4 md:mt-0 items-start">
+                          {!comment.teacherReply && (
+                            <Button 
+                              onClick={() => setReplyingToId(comment.id)} 
+                              variant="secondary" size="sm" className="text-kinpaku-gold border-kinpaku-gold/50"
+                            >
+                              💬 Trả lời
+                            </Button>
+                          )}
                           <Button 
                             onClick={() => handlePin(comment.id, comment.pinned)} 
                             variant="secondary" size="sm" className={comment.pinned ? "text-text-muted" : "text-kinpaku-gold border-kinpaku-gold"}

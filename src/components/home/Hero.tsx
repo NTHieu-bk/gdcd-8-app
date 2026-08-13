@@ -30,16 +30,16 @@ export function Hero() {
           </h1>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-            <Link href="#main-content">
+            <a href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById('main-content')?.scrollIntoView({ behavior: 'smooth' }); }}>
               <Button variant="primary" size="lg" className="w-full sm:w-auto">
                 <span className="mr-2">🔎</span> KHÁM PHÁ CHỦ ĐỀ
               </Button>
-            </Link>
-            <Link href="#explore">
+            </a>
+            <a href="#explore" onClick={(e) => { e.preventDefault(); document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' }); }}>
               <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                 <span className="mr-2">🚀</span> BẮT ĐẦU HÀNH TRÌNH
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
 

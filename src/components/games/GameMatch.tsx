@@ -24,6 +24,15 @@ export function GameMatch() {
   
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('gameMatchPairs');
+    if (saved) {
+      try {
+        setMatchedPairs(JSON.parse(saved));
+      } catch(e) {}
+    }
+  }, []);
+
   // Initialize and shuffle
   useEffect(() => {
     const left = PAIRS.map(p => ({ id: p.id, text: p.left })).sort(() => Math.random() - 0.5);
@@ -36,7 +45,11 @@ export function GameMatch() {
     if (selectedLeft && selectedRight) {
       if (selectedLeft === selectedRight) {
         // Match!
-        setMatchedPairs(prev => [...prev, selectedLeft]);
+        setMatchedPairs(prev => {
+          const newPairs = [...prev, selectedLeft];
+          localStorage.setItem('gameMatchPairs', JSON.stringify(newPairs));
+          return newPairs;
+        });
         setMessage({ text: '✅ Chính xác!', type: 'success' });
         setTimeout(() => {
           setSelectedLeft(null);
@@ -64,6 +77,7 @@ export function GameMatch() {
     setSelectedLeft(null);
     setSelectedRight(null);
     setMessage(null);
+    localStorage.removeItem('gameMatchPairs');
   };
 
   return (
@@ -77,7 +91,7 @@ export function GameMatch() {
         <div className="relative bg-raised-lacquer border border-gold-hairline rounded-xl p-6 md:p-10 shadow-lg">
           {message && (
             <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full font-bold z-10 transition-all ${
-              message.type === 'success' ? 'bg-emerald-600/90 text-white shadow-[0_0_20px_rgba(5,150,105,0.4)]' : 'bg-vermilion-warning/90 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+              message.type === 'success' ? 'bg-emerald-600/90 text-white shadow-[0_0_20px_rgba(5,150,105,0.4)]' : 'bg-red-500/90 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]'
             }`}>
               {message.text}
             </div>

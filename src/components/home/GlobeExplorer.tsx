@@ -121,9 +121,37 @@ export function GlobeExplorer({ selectedCountry, onSelectCountry }: GlobeExplore
                   
                   <div className="text-text-muted mb-8 leading-relaxed space-y-4">
                     {selectedCountry.description && (
-                      <p className="text-text-warm font-medium">{selectedCountry.description}</p>
+                      <p className="text-text-warm font-medium border-b border-gold-hairline pb-4">{selectedCountry.description}</p>
                     )}
-                    <p>Hãy trò chuyện cùng Đại sứ Văn hóa AI để tìm hiểu sâu hơn về những nét đặc sắc của quốc gia này.</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm text-left">
+                      {selectedCountry.language && (
+                        <div>
+                          <span className="block text-kinpaku-gold text-xs uppercase tracking-wider mb-1">🗣️ Ngôn ngữ</span>
+                          <span className="text-champagne">{selectedCountry.language}</span>
+                        </div>
+                      )}
+                      {selectedCountry.cuisine && (
+                        <div>
+                          <span className="block text-kinpaku-gold text-xs uppercase tracking-wider mb-1">🍲 Ẩm thực</span>
+                          <span className="text-champagne">{selectedCountry.cuisine}</span>
+                        </div>
+                      )}
+                      {selectedCountry.costume && (
+                        <div>
+                          <span className="block text-kinpaku-gold text-xs uppercase tracking-wider mb-1">👘 Trang phục</span>
+                          <span className="text-champagne">{selectedCountry.costume}</span>
+                        </div>
+                      )}
+                      {selectedCountry.festival && (
+                        <div>
+                          <span className="block text-kinpaku-gold text-xs uppercase tracking-wider mb-1">🎉 Lễ hội</span>
+                          <span className="text-champagne">{selectedCountry.festival}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm italic pt-4">Hãy trò chuyện cùng Đại sứ Văn hóa AI để tìm hiểu sâu hơn về những nét đặc sắc của quốc gia này.</p>
                   </div>
                   
                   <a href="#ai-ambassador" className="mt-auto w-full">
