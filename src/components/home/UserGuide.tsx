@@ -45,7 +45,7 @@ export function UserGuide() {
   ];
 
   return (
-    <section id="user-guide" className="py-16 bg-lacquer-black border-t border-gold-hairline">
+    <section id="guide" className="py-16 bg-lacquer-black border-t border-gold-hairline">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-display font-medium text-kinpaku-gold mb-4 flex justify-center items-center gap-3 uppercase tracking-wider">
@@ -91,7 +91,7 @@ export function UserGuide() {
                 <div 
                   className={`overflow-hidden transition-all duration-300 ${activeFaq === idx ? 'max-h-40' : 'max-h-0'}`}
                 >
-                  <div className="p-5 pt-0 text-text-muted text-sm border-t border-gold-hairline-strong mt-2">
+                  <div className="p-5 text-text-muted text-sm border-t border-gold-hairline-strong">
                     {faq.a}
                   </div>
                 </div>

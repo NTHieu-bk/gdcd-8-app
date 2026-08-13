@@ -35,7 +35,7 @@ export function Hero() {
                 <span className="mr-2">🔎</span> KHÁM PHÁ CHỦ ĐỀ
               </Button>
             </Link>
-            <Link href="#ai-ambassador">
+            <Link href="#explore">
               <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                 <span className="mr-2">🚀</span> BẮT ĐẦU HÀNH TRÌNH
               </Button>

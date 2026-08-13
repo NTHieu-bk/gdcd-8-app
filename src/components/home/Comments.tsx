@@ -22,6 +22,18 @@ export function Comments() {
   const [content, setContent] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Initialize from localStorage
+  useEffect(() => {
+    const studentDataStr = localStorage.getItem('studentData');
+    if (studentDataStr) {
+      try {
+        const student = JSON.parse(studentDataStr);
+        setName(student.full_name || student.username);
+        setClassName(student.class_name || '');
+      } catch (e) {}
+    }
+  }, []);
+
   // Fetch comments
   useEffect(() => {
     const fetchComments = async () => {
@@ -118,25 +130,8 @@ export function Comments() {
         <Card className="border-gold-hairline bg-raised-lacquer mb-10 shadow-lg">
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-kinpaku-gold mb-1">Họ và tên *</label>
-                  <Input 
-                    value={name} 
-                    onChange={e => setName(e.target.value)} 
-                    placeholder="VD: Nguyễn Văn A"
-                    required 
-                  />
-                </div>
-                <div className="md:col-span-1">
-                  <label className="block text-sm text-kinpaku-gold mb-1">Lớp *</label>
-                  <Input 
-                    value={className} 
-                    onChange={e => setClassName(e.target.value)} 
-                    placeholder="VD: 8A1"
-                    required 
-                  />
-                </div>
+              <div className="bg-kinpaku-gold/10 p-3 rounded border border-kinpaku-gold/30 mb-4">
+                <p className="text-sm text-champagne">Bình luận dưới tên: <strong>{name}</strong> - Lớp: <strong>{className}</strong></p>
               </div>
               
               <div>

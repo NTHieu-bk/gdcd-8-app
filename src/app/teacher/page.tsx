@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,27 +11,45 @@ export default function TeacherPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const storedStatus = localStorage.getItem('teacherLoggedIn');
+    if (storedStatus === 'true') {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Use hardcoded credentials from prompt
-    if (username === 'Nguyễn Thị Thanh Thuỷ' && password === 'Web10CDTC') {
+    const normalizedUsername = username.trim().toLowerCase();
+    if ((normalizedUsername === 'nguyễn thị thanh thuỷ' || normalizedUsername === 'nguyễn thị thanh thủy') && password === 'Web10CDTC') {
       setIsLoggedIn(true);
       setError(false);
+      localStorage.setItem('teacherLoggedIn', 'true');
     } else {
       setError(true);
     }
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('teacherLoggedIn');
+  };
+
+  if (!isMounted) return null; // Prevent hydration mismatch
+
   if (isLoggedIn) {
-    return <Dashboard onLogout={() => setIsLoggedIn(false)} />;
+    return <Dashboard onLogout={handleLogout} />;
   }
 
   return (
     <div className="min-h-screen bg-lacquer-black flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gold-hairline-strong bg-lacquer-deep shadow-[0_0_50px_rgba(212,175,55,0.15)] animate-fade-in-up">
         <div className="h-2 w-full bg-kinpaku-gold"></div>
-        <CardContent className="p-8">
+        <div className="p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-display font-medium text-kinpaku-gold mb-2 uppercase tracking-wider">
               Cổng Giáo Viên
@@ -43,12 +61,13 @@ export default function TeacherPage() {
             <div>
               <label className="block text-sm text-champagne mb-2">Tên đăng nhập</label>
               <Input 
+                id="username" 
+                type="text" 
                 value={username} 
                 onChange={(e) => {
                   setUsername(e.target.value);
                   setError(false);
                 }} 
-                placeholder="Nhập tên đăng nhập"
                 className={error ? "border-vermilion-warning focus-visible:ring-vermilion-warning" : ""}
                 required
               />
@@ -63,7 +82,6 @@ export default function TeacherPage() {
                   setPassword(e.target.value);
                   setError(false);
                 }} 
-                placeholder="Nhập mật khẩu"
                 className={error ? "border-vermilion-warning focus-visible:ring-vermilion-warning" : ""}
                 required
               />
@@ -81,11 +99,11 @@ export default function TeacherPage() {
           </form>
           
           <div className="mt-8 text-center">
-            <a href="/" className="text-sm text-text-muted hover:text-kinpaku-gold transition-colors">
+            <a href="/login" className="text-sm text-text-muted hover:text-kinpaku-gold transition-colors">
               ← Quay lại Trang Chủ Học Sinh
             </a>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

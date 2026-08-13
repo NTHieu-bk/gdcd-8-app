@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
 import { Objectives } from "@/components/home/Objectives";
 import { GlobeExplorer } from "@/components/home/GlobeExplorer";
-import { AIAmbassador } from "@/components/home/AIAmbassador";
 import { MainContent } from "@/components/home/MainContent";
 import { CountryData } from "@/data/countries";
 
@@ -19,7 +19,18 @@ import { Comments } from "@/components/home/Comments";
 import { UserGuide } from "@/components/home/UserGuide";
 
 export default function Home() {
+  const router = useRouter();
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (localStorage.getItem('studentLoggedIn') !== 'true') {
+      router.push('/login');
+    }
+  }, [router]);
+
+  if (!isMounted) return null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -31,7 +42,6 @@ export default function Home() {
           selectedCountry={selectedCountry} 
           onSelectCountry={setSelectedCountry} 
         />
-        <AIAmbassador selectedCountry={selectedCountry} />
         <MainContent />
         <Questions />
         

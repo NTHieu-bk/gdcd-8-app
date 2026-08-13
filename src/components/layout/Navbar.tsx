@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/', label: 'Trang chủ', icon: '🏠' },
@@ -26,15 +27,21 @@ const navLinks = [
       { href: '#guide', label: 'Hướng dẫn sử dụng', icon: '❓' },
     ],
   },
-  { href: '/teacher', label: 'Giáo viên', icon: '👩‍🏫' },
 ];
 
 export function Navbar() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const toggleDropdown = (label: string) => {
     setActiveDropdown(activeDropdown === label ? null : label);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('studentLoggedIn');
+    localStorage.removeItem('studentData');
+    router.push('/login');
   };
 
   return (
@@ -99,6 +106,14 @@ export function Navbar() {
                 )}
               </div>
             ))}
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-vermilion-warning hover:text-vermilion-deep transition-colors text-sm font-medium py-2 ml-4 border border-vermilion-warning/30 px-3 rounded-full hover:bg-vermilion-warning/10"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Đăng xuất</span>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -151,6 +166,16 @@ export function Navbar() {
                 )}
               </div>
             ))}
+            
+            <div className="pt-4 pb-2 border-t border-gold-hairline mt-2">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-base font-medium text-vermilion-warning hover:text-vermilion-deep w-full text-left"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

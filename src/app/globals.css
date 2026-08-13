@@ -9,7 +9,7 @@
   
   /* Brand anchors (Red Accent) */
   --color-kinpaku-gold: oklch(60% 0.22 25);      /* Ampere Red */
-  --color-kinpaku-pale: oklch(92% 0.06 25);      /* Pale Red */
+  --color-kinpaku-pale: oklch(65% 0.15 25);      /* Readable Faded Red */
   --color-kinpaku-deep: oklch(45% 0.15 25);      /* Deep Red */
   --color-verdigris-patina: oklch(70% 0.12 188); /* Keep cyan as complimentary */
   --color-patina-pale: oklch(82% 0.07 188);
