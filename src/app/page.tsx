@@ -37,6 +37,29 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <Objectives />
+        
+        {/* Featured Video Section */}
+        <section className="py-12 bg-lacquer-black">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-display font-medium text-kinpaku-gold mb-4 uppercase tracking-wider">
+                BỨC TRANH ĐA VĂN HÓA
+              </h2>
+              <div className="w-24 h-1 bg-vermilion-warning mx-auto"></div>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-kinpaku-gold/10 border border-gold-hairline aspect-video relative group">
+              <video 
+                className="w-full h-full object-cover"
+                controls
+                poster="/culture-1.jpg.jpg" // Using an existing culture image as poster
+              >
+                <source src="/buc-tranh-da-van-hoa.mp4" type="video/mp4" />
+                Trình duyệt của bạn không hỗ trợ thẻ video.
+              </video>
+            </div>
+          </div>
+        </section>
+
         <GlobeExplorer 
           selectedCountry={selectedCountry} 
           onSelectCountry={setSelectedCountry} 
